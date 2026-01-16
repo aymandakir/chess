@@ -42,15 +42,15 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
       newSquares[move.to] = {
         background:
           move.captured
-            ? "radial-gradient(circle, rgba(239, 68, 68, 0.5) 0%, rgba(239, 68, 68, 0.2) 85%, transparent 100%)"
-            : "radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(59, 130, 246, 0.15) 85%, transparent 100%)",
+            ? "radial-gradient(circle, rgba(239, 68, 68, 0.7) 15%, transparent 20%)"
+            : "radial-gradient(circle, rgba(59, 130, 246, 0.5) 20%, transparent 25%)",
         borderRadius: "50%",
       };
     });
     
-    // Highlight the selected square
+    // Subtle highlight for the selected square
     newSquares[square] = {
-      background: "rgba(59, 130, 246, 0.2)",
+      background: "rgba(59, 130, 246, 0.12)",
     };
     
     setOptionSquares(newSquares);
