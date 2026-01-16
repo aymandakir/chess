@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/navigation";
-import { Users, Sparkles, Cpu } from "lucide-react";
+import { Users, Sparkles, Cpu, X } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
   const [showBotMenu, setShowBotMenu] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [gameCode, setGameCode] = useState("");
 
   const createGame = () => {
     const gameId = nanoid(10);
@@ -15,9 +17,8 @@ export default function Home() {
   };
 
   const joinGame = () => {
-    const gameId = prompt("Enter game code:");
-    if (gameId) {
-      router.push(`/game/${gameId}`);
+    if (gameCode.trim()) {
+      router.push(`/game/${gameCode.trim()}`);
     }
   };
 
@@ -73,12 +74,60 @@ export default function Home() {
           </button>
 
           <button
-            onClick={joinGame}
+            onClick={() => setShowJoinModal(true)}
             className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-medium py-3 px-6 rounded-xl transition-all duration-200"
           >
             Join with Code
           </button>
         </div>
+
+        {/* Join Game Modal */}
+        {showJoinModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold font-display text-neutral-900">
+                  Join Game
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowJoinModal(false);
+                    setGameCode("");
+                  }}
+                  className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <p className="text-neutral-600 mb-4">
+                Enter the game code shared by your friend
+              </p>
+              
+              <input
+                type="text"
+                value={gameCode}
+                onChange={(e) => setGameCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    joinGame();
+                  }
+                }}
+                placeholder="Enter game code"
+                className="w-full px-4 py-3 border-2 border-neutral-200 rounded-lg focus:border-primary-500 focus:outline-none font-mono text-lg text-center"
+                autoFocus
+              />
+              
+              <button
+                onClick={joinGame}
+                disabled={!gameCode.trim()}
+                className="w-full mt-4 bg-primary-500 hover:bg-primary-600 disabled:bg-neutral-200 disabled:text-neutral-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 disabled:cursor-not-allowed"
+              >
+                Join Game
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Bot Level Selection */}
         {showBotMenu && (
