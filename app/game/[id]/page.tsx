@@ -193,12 +193,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   onSquareClick: ({ square }) => onSquareClick(square),
                   onPieceClick: ({ piece, square }) => onPieceClick(piece.pieceType, square),
                   onMouseOverSquare: ({ square, piece }) => {
-                    if (piece) {
+                    // Only show hover preview if no piece is currently selected
+                    if (!selectedSquare && piece) {
                       getMoveOptions(square);
                     }
                   },
                   onMouseOutSquare: () => {
-                    setOptionSquares({});
+                    // Only clear if no piece is selected (don't clear on click-selection)
+                    if (!selectedSquare) {
+                      setOptionSquares({});
+                    }
                   },
                   boardStyle: {
                     borderRadius: '8px',

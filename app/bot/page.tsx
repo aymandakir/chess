@@ -265,12 +265,16 @@ function BotGame() {
                   onSquareClick: ({ square }) => onSquareClick(square),
                   onPieceClick: ({ piece, square }) => onPieceClick(piece.pieceType, square),
                   onMouseOverSquare: ({ square, piece }) => {
-                    if (!thinking && game.turn() === 'w' && piece && piece.pieceType[0] === 'w') {
+                    // Only show hover preview if no piece is currently selected
+                    if (!selectedSquare && !thinking && game.turn() === 'w' && piece && piece.pieceType[0] === 'w') {
                       getMoveOptions(square);
                     }
                   },
                   onMouseOutSquare: () => {
-                    setOptionSquares({});
+                    // Only clear if no piece is selected (don't clear on click-selection)
+                    if (!selectedSquare) {
+                      setOptionSquares({});
+                    }
                   },
                   boardStyle: {
                     borderRadius: '8px',
