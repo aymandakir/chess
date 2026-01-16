@@ -7,6 +7,7 @@ import { Home, RotateCcw, Cpu } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTheme } from "@/lib/useTheme";
+import PromotionDialog from "@/components/PromotionDialog";
 
 function BotGame() {
   const { isDark } = useTheme();
@@ -18,6 +19,8 @@ function BotGame() {
   const [optionSquares, setOptionSquares] = useState<Record<string, any>>({});
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [premove, setPremove] = useState<{ from: string; to: string } | null>(null);
+  const [showPromotion, setShowPromotion] = useState(false);
+  const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null);
 
   const getLevelName = (elo: number) => {
     if (elo <= 800) return "Beginner";
@@ -156,6 +159,43 @@ function BotGame() {
     return true;
   };
 
+  const isPromotion = (from: string, to: string) => {
+    const piece = game.get(from as any);
+    if (!piece || piece.type !== 'p') return false;
+    
+    const toRank = to[1];
+    return (piece.color === 'w' && toRank === '8') || (piece.color === 'b' && toRank === '1');
+  };
+
+  const executeMove = (from: string, to: string, promotion?: string) => {
+    setOptionSquares({});
+    setSelectedSquare(null);
+    
+    try {
+      const gameCopy = new Chess(game.fen());
+      const move = gameCopy.move({
+        from: from,
+        to: to,
+        promotion: promotion || 'q',
+      });
+
+      if (move === null) return false;
+
+      setGame(gameCopy);
+      
+      // Computer makes a move after player (if game not over)
+      if (!gameCopy.isGameOver() && gameCopy.turn() === 'b') {
+        setTimeout(() => {
+          makeComputerMove(gameCopy);
+        }, 200);
+      }
+      
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const onDrop = (sourceSquare: string, targetSquare: string) => {
     // If computer is thinking or not player's turn, treat as premove via drag
     if (thinking && game.turn() === 'b') {
@@ -167,34 +207,22 @@ function BotGame() {
     // Can't make normal moves during computer's turn
     if (game.turn() !== 'w') return false;
     
-    // Clear highlights and selection
-    setOptionSquares({});
-    setSelectedSquare(null);
-    
-    try {
-      const gameCopy = new Chess(game.fen());
-      const move = gameCopy.move({
-        from: sourceSquare,
-        to: targetSquare,
-        promotion: 'q',
-      });
-
-      if (move === null) return false;
-
-      setGame(gameCopy);
-      
-      // Computer makes a move after player (if game not over)
-      if (!gameCopy.isGameOver() && gameCopy.turn() === 'b') {
-        // Small delay before computer thinks
-        setTimeout(() => {
-          makeComputerMove(gameCopy);
-        }, 200);
-      }
-      
+    // Check if this is a pawn promotion
+    if (isPromotion(sourceSquare, targetSquare)) {
+      setPendingPromotion({ from: sourceSquare, to: targetSquare });
+      setShowPromotion(true);
       return true;
-    } catch {
-      return false;
     }
+    
+    return executeMove(sourceSquare, targetSquare);
+  };
+
+  const handlePromotion = (piece: 'q' | 'r' | 'b' | 'n') => {
+    if (pendingPromotion) {
+      executeMove(pendingPromotion.from, pendingPromotion.to, piece);
+      setPendingPromotion(null);
+    }
+    setShowPromotion(false);
   };
 
   const onSquareClick = (square: string) => {
@@ -434,6 +462,18 @@ function BotGame() {
           </div>
         </div>
       </div>
+
+      {/* Promotion Dialog */}
+      {showPromotion && (
+        <PromotionDialog
+          color="w"
+          onSelect={handlePromotion}
+          onCancel={() => {
+            setShowPromotion(false);
+            setPendingPromotion(null);
+          }}
+        />
+      )}
     </div>
   );
 }

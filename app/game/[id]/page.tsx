@@ -6,6 +6,7 @@ import { Chessboard } from "react-chessboard";
 import { Copy, Home, RotateCcw, Check } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTheme } from "@/lib/useTheme";
+import PromotionDialog from "@/components/PromotionDialog";
 
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -16,6 +17,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [copied, setCopied] = useState(false);
   const [optionSquares, setOptionSquares] = useState<Record<string, any>>({});
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [showPromotion, setShowPromotion] = useState(false);
+  const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string; color: 'w' | 'b' } | null>(null);
 
   const gameLink = typeof window !== 'undefined' 
     ? `${window.location.origin}/game/${gameId}` 
@@ -58,16 +61,24 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     return true;
   };
 
-  const onDrop = (sourceSquare: string, targetSquare: string) => {
+  const isPromotion = (from: string, to: string) => {
+    const piece = game.get(from as any);
+    if (!piece || piece.type !== 'p') return false;
+    
+    const toRank = to[1];
+    return (piece.color === 'w' && toRank === '8') || (piece.color === 'b' && toRank === '1');
+  };
+
+  const executeMove = (from: string, to: string, promotion?: string) => {
     setOptionSquares({});
     setSelectedSquare(null);
     
     try {
       const gameCopy = new Chess(game.fen());
       const move = gameCopy.move({
-        from: sourceSquare,
-        to: targetSquare,
-        promotion: 'q',
+        from: from,
+        to: to,
+        promotion: promotion || 'q',
       });
 
       if (move === null) return false;
@@ -77,6 +88,31 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     } catch {
       return false;
     }
+  };
+
+  const onDrop = (sourceSquare: string, targetSquare: string) => {
+    const piece = game.get(sourceSquare as any);
+    
+    // Check if this is a pawn promotion
+    if (isPromotion(sourceSquare, targetSquare)) {
+      setPendingPromotion({ 
+        from: sourceSquare, 
+        to: targetSquare,
+        color: piece?.color || 'w'
+      });
+      setShowPromotion(true);
+      return true;
+    }
+    
+    return executeMove(sourceSquare, targetSquare);
+  };
+
+  const handlePromotion = (piece: 'q' | 'r' | 'b' | 'n') => {
+    if (pendingPromotion) {
+      executeMove(pendingPromotion.from, pendingPromotion.to, piece);
+      setPendingPromotion(null);
+    }
+    setShowPromotion(false);
   };
 
   const onSquareClick = (square: string) => {
@@ -259,6 +295,18 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
           </div>
         </div>
       </div>
+
+      {/* Promotion Dialog */}
+      {showPromotion && pendingPromotion && (
+        <PromotionDialog
+          color={pendingPromotion.color}
+          onSelect={handlePromotion}
+          onCancel={() => {
+            setShowPromotion(false);
+            setPendingPromotion(null);
+          }}
+        />
+      )}
     </div>
   );
 }
