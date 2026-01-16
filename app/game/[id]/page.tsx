@@ -43,18 +43,26 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
     const newSquares: Record<string, any> = {};
     moves.forEach((move) => {
-      newSquares[move.to] = {
-        background:
-          move.captured
-            ? "radial-gradient(circle, rgba(239, 68, 68, 0.7) 15%, transparent 20%)"
-            : "radial-gradient(circle, rgba(59, 130, 246, 0.5) 20%, transparent 25%)",
-        borderRadius: "50%",
-      };
+      if (move.captured) {
+        // Capture moves: Bold border around entire square
+        newSquares[move.to] = {
+          background: "rgba(239, 68, 68, 0.15)",
+          boxShadow: "inset 0 0 0 3px rgba(239, 68, 68, 0.9)",
+          borderRadius: "4px",
+        };
+      } else {
+        // Regular moves: Small centered dot
+        newSquares[move.to] = {
+          background: "radial-gradient(circle, rgba(59, 130, 246, 0.6) 20%, transparent 25%)",
+          borderRadius: "50%",
+        };
+      }
     });
     
     // Subtle highlight for the selected square
     newSquares[square] = {
-      background: "rgba(59, 130, 246, 0.12)",
+      background: "rgba(59, 130, 246, 0.15)",
+      borderRadius: "4px",
     };
     
     setOptionSquares(newSquares);
