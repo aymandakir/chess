@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTheme } from "@/lib/useTheme";
 import PromotionDialog from "@/components/PromotionDialog";
+import CheckmateEffect from "@/components/CheckmateEffect";
 
 function BotGame() {
   const { isDark } = useTheme();
@@ -21,6 +22,7 @@ function BotGame() {
   const [premove, setPremove] = useState<{ from: string; to: string } | null>(null);
   const [showPromotion, setShowPromotion] = useState(false);
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null);
+  const [showCheckmate, setShowCheckmate] = useState(false);
 
   const getLevelName = (elo: number) => {
     if (elo <= 800) return "Beginner";
@@ -302,12 +304,23 @@ function BotGame() {
     const newGame = new Chess();
     setGame(newGame);
     setThinking(false);
+    setShowCheckmate(false);
+    setSelectedSquare(null);
+    setOptionSquares({});
+    setPremove(null);
   };
 
   const isCheck = game.isCheck();
   const isCheckmate = game.isCheckmate();
   const isDraw = game.isDraw();
   const turn = game.turn() === 'w' ? 'White' : 'Black';
+
+  // Show checkmate effect when game ends
+  useEffect(() => {
+    if (isCheckmate) {
+      setTimeout(() => setShowCheckmate(true), 500);
+    }
+  }, [isCheckmate]);
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 p-4 md:p-8 transition-colors duration-300">
@@ -483,6 +496,14 @@ function BotGame() {
             setShowPromotion(false);
             setPendingPromotion(null);
           }}
+        />
+      )}
+
+      {/* Checkmate Effect */}
+      {showCheckmate && (
+        <CheckmateEffect
+          winner={turn === 'White' ? 'Black' : 'White'}
+          onClose={resetGame}
         />
       )}
     </div>

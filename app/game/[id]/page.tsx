@@ -7,6 +7,7 @@ import { Copy, Home, RotateCcw, Check } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTheme } from "@/lib/useTheme";
 import PromotionDialog from "@/components/PromotionDialog";
+import CheckmateEffect from "@/components/CheckmateEffect";
 
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -19,6 +20,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [showPromotion, setShowPromotion] = useState(false);
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string; color: 'w' | 'b' } | null>(null);
+  const [showCheckmate, setShowCheckmate] = useState(false);
 
   const gameLink = typeof window !== 'undefined' 
     ? `${window.location.origin}/game/${gameId}` 
@@ -159,12 +161,22 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
   const resetGame = () => {
     setGame(new Chess());
+    setShowCheckmate(false);
+    setSelectedSquare(null);
+    setOptionSquares({});
   };
 
   const isCheck = game.isCheck();
   const isCheckmate = game.isCheckmate();
   const isDraw = game.isDraw();
   const turn = game.turn() === 'w' ? 'White' : 'Black';
+
+  // Show checkmate effect when game ends
+  useEffect(() => {
+    if (isCheckmate) {
+      setTimeout(() => setShowCheckmate(true), 500);
+    }
+  }, [isCheckmate]);
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 p-4 md:p-8 transition-colors duration-300">
@@ -314,6 +326,14 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             setShowPromotion(false);
             setPendingPromotion(null);
           }}
+        />
+      )}
+
+      {/* Checkmate Effect */}
+      {showCheckmate && (
+        <CheckmateEffect
+          winner={turn === 'White' ? 'Black' : 'White'}
+          onClose={resetGame}
         />
       )}
     </div>
