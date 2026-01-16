@@ -304,19 +304,35 @@ function BotGame() {
             </div>
 
             {/* Info */}
-            <div className="bg-primary-50 dark:bg-primary-950/50 rounded-xl p-6 border border-primary-100 dark:border-primary-900">
-              <h3 className="font-semibold text-primary-900 dark:text-primary-300 mb-3">
-                Playing vs {getLevelName(elo)}
-              </h3>
-              <div className="text-sm text-primary-800 dark:text-primary-200 space-y-2">
-                <p>ELO Rating: <span className="font-semibold">{elo}</span></p>
-                <p className="text-xs text-primary-600 dark:text-primary-400 mt-2">
-                  You are White. Computer is Black.
-                </p>
+            <div className="bg-white dark:bg-neutral-800 rounded-xl p-6 shadow-sm border border-neutral-200 dark:border-neutral-700">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Cpu className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+                  <h3 className="font-semibold text-neutral-900 dark:text-white">
+                    {getLevelName(elo)}
+                  </h3>
+                </div>
+                
+                <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg">
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400">ELO Rating</span>
+                  <span className="font-mono font-bold text-neutral-900 dark:text-white">{elo}</span>
+                </div>
+
+                <div className="pt-2 space-y-1.5 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-white dark:bg-neutral-200 rounded border-2 border-neutral-300 dark:border-neutral-600" />
+                    <span className="text-neutral-700 dark:text-neutral-300">You (White)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-neutral-800 dark:bg-neutral-700 rounded border-2 border-neutral-400 dark:border-neutral-500" />
+                    <span className="text-neutral-700 dark:text-neutral-300">Computer (Black)</span>
+                  </div>
+                </div>
+
                 {thinking && (
-                  <p className="text-xs text-primary-700 dark:text-primary-300 font-medium animate-pulse">
+                  <div className="pt-2 text-xs text-primary-600 dark:text-primary-400 font-medium animate-pulse">
                     🤔 Computer is thinking...
-                  </p>
+                  </div>
                 )}
               </div>
             </div>
