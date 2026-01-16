@@ -92,6 +92,10 @@ function BotGame() {
 
   const tryPremove = (currentGame: Chess, move: { from: string; to: string }) => {
     try {
+      // Clear the selection and highlights when executing premove
+      setSelectedSquare(null);
+      setOptionSquares({});
+      
       const gameCopy = new Chess(currentGame.fen());
       const result = gameCopy.move({
         from: move.from,
@@ -153,13 +157,15 @@ function BotGame() {
   };
 
   const onDrop = (sourceSquare: string, targetSquare: string) => {
-    // If computer is thinking, this is a premove via drag
-    if (thinking || game.turn() !== 'w') {
+    // If computer is thinking or not player's turn, treat as premove via drag
+    if (thinking && game.turn() === 'b') {
       setPremove({ from: sourceSquare, to: targetSquare });
-      setOptionSquares({});
-      setSelectedSquare(null);
+      setSelectedSquare(sourceSquare); // Keep selection visible
       return true; // Accept the drag but queue as premove
     }
+    
+    // Can't make normal moves during computer's turn
+    if (game.turn() !== 'w') return false;
     
     // Clear highlights and selection
     setOptionSquares({});
@@ -192,8 +198,8 @@ function BotGame() {
   };
 
   const onSquareClick = (square: string) => {
-    // Allow premoves during computer's turn
-    if (game.turn() !== 'w' && thinking) {
+    // PREMOVE MODE: Allow setting up moves during computer's turn
+    if (thinking && game.turn() === 'b') {
       // If no piece is selected, select a white piece for premove
       if (!selectedSquare) {
         const piece = game.get(square as any);
@@ -204,14 +210,13 @@ function BotGame() {
         return;
       }
       
-      // Set premove
+      // If a piece is selected, set the premove to this square
       setPremove({ from: selectedSquare, to: square });
-      setSelectedSquare(null);
-      setOptionSquares({});
+      // Keep the selection visible so user can see their premove
       return;
     }
     
-    // Normal turn logic
+    // NORMAL MODE: Regular turn logic
     if (game.turn() !== 'w') return;
     
     // If no piece is selected, try to select this square's piece
@@ -355,7 +360,7 @@ function BotGame() {
                     backgroundColor: isDark ? '#262626' : '#a8a29e',
                   },
                   squareStyles: optionSquares,
-                  allowDragging: !thinking,
+                  allowDragging: true, // Always allow dragging for premoves
                 }}
               />
             </div>
