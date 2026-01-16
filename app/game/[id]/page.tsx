@@ -15,6 +15,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [game, setGame] = useState(new Chess());
   const [copied, setCopied] = useState(false);
   const [optionSquares, setOptionSquares] = useState<Record<string, any>>({});
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
 
   const gameLink = typeof window !== 'undefined' 
     ? `${window.location.origin}/game/${gameId}` 
@@ -59,6 +60,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
   const onDrop = (sourceSquare: string, targetSquare: string) => {
     setOptionSquares({});
+    setSelectedSquare(null);
     
     try {
       const gameCopy = new Chess(game.fen());
@@ -78,11 +80,35 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   };
 
   const onSquareClick = (square: string) => {
-    getMoveOptions(square);
+    // If no piece is selected, try to select this square's piece
+    if (!selectedSquare) {
+      const piece = game.get(square as any);
+      if (piece) {
+        setSelectedSquare(square);
+        getMoveOptions(square);
+      }
+      return;
+    }
+    
+    // If a piece is already selected, try to move to this square
+    const moveSuccessful = onDrop(selectedSquare, square);
+    if (!moveSuccessful) {
+      // If the move failed, check if clicking on another piece
+      const piece = game.get(square as any);
+      if (piece) {
+        setSelectedSquare(square);
+        getMoveOptions(square);
+      } else {
+        // Deselect if clicking on empty square
+        setSelectedSquare(null);
+        setOptionSquares({});
+      }
+    }
   };
 
   const onPieceClick = (piece: string, square: string | null) => {
     if (square) {
+      setSelectedSquare(square);
       getMoveOptions(square);
     }
   };

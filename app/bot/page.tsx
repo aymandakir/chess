@@ -16,6 +16,7 @@ function BotGame() {
   const [game, setGame] = useState(new Chess());
   const [thinking, setThinking] = useState(false);
   const [optionSquares, setOptionSquares] = useState<Record<string, any>>({});
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
 
   const getLevelName = (elo: number) => {
     if (elo <= 800) return "Beginner";
@@ -105,8 +106,9 @@ function BotGame() {
   };
 
   const onDrop = (sourceSquare: string, targetSquare: string) => {
-    // Clear highlights
+    // Clear highlights and selection
     setOptionSquares({});
+    setSelectedSquare(null);
     
     // Prevent moves while computer is thinking
     if (thinking) return false;
@@ -141,10 +143,36 @@ function BotGame() {
   };
 
   const onSquareClick = (square: string) => {
-    // Don't show options when computer is thinking or it's not player's turn
+    // Don't allow clicks when computer is thinking or it's not player's turn
     if (thinking || game.turn() !== 'w') return;
     
-    getMoveOptions(square);
+    // If no piece is selected, try to select this square's piece
+    if (!selectedSquare) {
+      const piece = game.get(square as any);
+      if (piece && piece.color === 'w') {
+        setSelectedSquare(square);
+        getMoveOptions(square);
+      }
+      return;
+    }
+    
+    // If a piece is already selected, try to move to this square
+    const moveSuccessful = onDrop(selectedSquare, square);
+    if (moveSuccessful) {
+      setSelectedSquare(null);
+      setOptionSquares({});
+    } else {
+      // If the move failed, check if clicking on another piece
+      const piece = game.get(square as any);
+      if (piece && piece.color === 'w') {
+        setSelectedSquare(square);
+        getMoveOptions(square);
+      } else {
+        // Deselect if clicking on empty or opponent piece
+        setSelectedSquare(null);
+        setOptionSquares({});
+      }
+    }
   };
 
   const onPieceClick = (piece: string, square: string | null) => {
@@ -153,6 +181,7 @@ function BotGame() {
     
     // Only show options for white pieces
     if (piece[0] === 'w') {
+      setSelectedSquare(square);
       getMoveOptions(square);
     }
   };
