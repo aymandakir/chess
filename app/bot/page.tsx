@@ -22,25 +22,59 @@ function BotGame() {
     return "Grandmaster";
   };
 
-  const makeRandomMove = useCallback(() => {
-    const possibleMoves = game.moves();
+  const makeComputerMove = useCallback((currentGame: Chess) => {
+    const possibleMoves = currentGame.moves({ verbose: true });
     if (possibleMoves.length === 0) return;
 
-    // Simulate thinking time based on ELO
-    const thinkTime = Math.max(500, 2000 - (elo / 2));
+    // Simulate thinking time based on ELO (higher ELO = faster thinking)
+    const thinkTime = Math.max(300, 1500 - (elo / 3));
     
     setThinking(true);
+    
     setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * possibleMoves.length);
-      const gameCopy = new Chess(game.fen());
-      gameCopy.move(possibleMoves[randomIndex]);
+      const gameCopy = new Chess(currentGame.fen());
+      
+      // Simple move selection based on ELO
+      let selectedMove;
+      if (elo >= 2400) {
+        // Master/Grandmaster: Prefer captures and center control
+        const captures = possibleMoves.filter(m => m.captured);
+        const centerMoves = possibleMoves.filter(m => 
+          ['d4', 'd5', 'e4', 'e5'].includes(m.to)
+        );
+        
+        if (captures.length > 0 && Math.random() > 0.3) {
+          selectedMove = captures[Math.floor(Math.random() * captures.length)];
+        } else if (centerMoves.length > 0 && Math.random() > 0.5) {
+          selectedMove = centerMoves[Math.floor(Math.random() * centerMoves.length)];
+        } else {
+          selectedMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+        }
+      } else if (elo >= 1600) {
+        // Intermediate/Advanced: Sometimes prefer captures
+        const captures = possibleMoves.filter(m => m.captured);
+        if (captures.length > 0 && Math.random() > 0.5) {
+          selectedMove = captures[Math.floor(Math.random() * captures.length)];
+        } else {
+          selectedMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+        }
+      } else {
+        // Beginner/Casual: Purely random
+        selectedMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+      }
+      
+      gameCopy.move(selectedMove);
       setGame(gameCopy);
       setThinking(false);
     }, thinkTime);
-  }, [game, elo]);
+  }, [elo]);
 
   const onDrop = (sourceSquare: string, targetSquare: string) => {
+    // Prevent moves while computer is thinking
     if (thinking) return false;
+    
+    // Only allow moving white pieces (player is white)
+    if (game.turn() !== 'w') return false;
     
     try {
       const gameCopy = new Chess(game.fen());
@@ -54,9 +88,12 @@ function BotGame() {
 
       setGame(gameCopy);
       
-      // Computer makes a move after player
-      if (!gameCopy.isGameOver()) {
-        setTimeout(() => makeRandomMove(), 300);
+      // Computer makes a move after player (if game not over)
+      if (!gameCopy.isGameOver() && gameCopy.turn() === 'b') {
+        // Small delay before computer thinks
+        setTimeout(() => {
+          makeComputerMove(gameCopy);
+        }, 200);
       }
       
       return true;
@@ -66,7 +103,8 @@ function BotGame() {
   };
 
   const resetGame = () => {
-    setGame(new Chess());
+    const newGame = new Chess();
+    setGame(newGame);
     setThinking(false);
   };
 
@@ -175,8 +213,13 @@ function BotGame() {
               <div className="text-sm text-primary-800 space-y-2">
                 <p>ELO Rating: <span className="font-semibold">{elo}</span></p>
                 <p className="text-xs text-primary-600 mt-2">
-                  You play as White. Make your move!
+                  You are White. Computer is Black.
                 </p>
+                {thinking && (
+                  <p className="text-xs text-primary-700 font-medium animate-pulse">
+                    🤔 Computer is thinking...
+                  </p>
+                )}
               </div>
             </div>
 
