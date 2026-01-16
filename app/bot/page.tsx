@@ -9,6 +9,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { useTheme } from "@/lib/useTheme";
 import PromotionDialog from "@/components/PromotionDialog";
 import CheckmateEffect from "@/components/CheckmateEffect";
+import GameAnalysis from "@/components/GameAnalysis";
 
 function BotGame() {
   const { isDark } = useTheme();
@@ -24,6 +25,8 @@ function BotGame() {
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null);
   const [showCheckmate, setShowCheckmate] = useState(false);
   const [stockfish, setStockfish] = useState<Worker | null>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [gameHistory, setGameHistory] = useState<any[]>([]);
 
   const getLevelName = (elo: number) => {
     if (elo <= 800) return "Beginner";
@@ -109,6 +112,8 @@ function BotGame() {
           if (move) {
             setGame(gameCopy);
             updatedGame = gameCopy;
+            // Track computer move
+            setGameHistory(prev => [...prev, move]);
           }
         } catch (error) {
           console.error('Error making computer move:', error);
@@ -237,6 +242,9 @@ function BotGame() {
       if (move === null) return false;
 
       setGame(gameCopy);
+      
+      // Track move history for analysis
+      setGameHistory(prev => [...prev, move]);
       
       // Computer makes a move after player (if game not over)
       if (!gameCopy.isGameOver() && gameCopy.turn() === 'b') {
@@ -542,10 +550,26 @@ function BotGame() {
       )}
 
       {/* Checkmate Effect */}
-      {showCheckmate && (
+      {showCheckmate && !showAnalysis && (
         <CheckmateEffect
           winner={turn === 'White' ? 'Black' : 'White'}
-          onClose={resetGame}
+          onClose={() => {
+            setShowCheckmate(false);
+            setShowAnalysis(true);
+          }}
+        />
+      )}
+
+      {/* Game Analysis */}
+      {showAnalysis && (
+        <GameAnalysis
+          moves={gameHistory}
+          playerColor="w"
+          result={turn === 'White' ? 'loss' : 'win'}
+          onClose={() => {
+            setShowAnalysis(false);
+            resetGame();
+          }}
         />
       )}
     </div>
