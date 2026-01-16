@@ -23,6 +23,7 @@ function BotGame() {
   const [showPromotion, setShowPromotion] = useState(false);
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null);
   const [showCheckmate, setShowCheckmate] = useState(false);
+  const [stockfish, setStockfish] = useState<Worker | null>(null);
 
   const getLevelName = (elo: number) => {
     if (elo <= 800) return "Beginner";
@@ -33,67 +34,108 @@ function BotGame() {
     return "Grandmaster";
   };
 
+  const getEngineConfig = (elo: number) => {
+    if (elo <= 800) {
+      return { skillLevel: 0, depth: 1 };
+    } else if (elo <= 1200) {
+      return { skillLevel: 3, depth: 3 };
+    } else if (elo <= 1600) {
+      return { skillLevel: 7, depth: 6 };
+    } else if (elo <= 2000) {
+      return { skillLevel: 12, depth: 10 };
+    } else if (elo <= 2400) {
+      return { skillLevel: 17, depth: 14 };
+    } else {
+      return { skillLevel: 20, depth: 18 };
+    }
+  };
+
+  // Initialize Stockfish
+  useEffect(() => {
+    const worker = new Worker('/stockfish.js');
+    worker.postMessage('uci');
+    setStockfish(worker);
+
+    return () => {
+      worker.postMessage('quit');
+      worker.terminate();
+    };
+  }, []);
+
   const makeComputerMove = useCallback((currentGame: Chess) => {
+    if (!stockfish) return;
+    
     const possibleMoves = currentGame.moves({ verbose: true });
     if (possibleMoves.length === 0) return;
 
-    // Simulate thinking time based on ELO (higher ELO = faster thinking)
-    const thinkTime = Math.max(300, 1500 - (elo / 3));
-    
     setThinking(true);
+
+    const config = getEngineConfig(elo);
     
-    setTimeout(() => {
-      const gameCopy = new Chess(currentGame.fen());
+    // Configure Stockfish with current ELO settings
+    stockfish.postMessage(`setoption name Skill Level value ${config.skillLevel}`);
+    stockfish.postMessage(`setoption name UCI_LimitStrength value true`);
+    stockfish.postMessage(`setoption name UCI_Elo value ${elo}`);
+    
+    // Set up position
+    stockfish.postMessage(`position fen ${currentGame.fen()}`);
+    
+    // Start search
+    stockfish.postMessage(`go depth ${config.depth}`);
+
+    // Listen for best move
+    const handleMessage = (event: MessageEvent) => {
+      const message = event.data;
       
-      // Simple move selection based on ELO
-      let selectedMove;
-      if (elo >= 2400) {
-        // Master/Grandmaster: Prefer captures and center control
-        const captures = possibleMoves.filter(m => m.captured);
-        const centerMoves = possibleMoves.filter(m => 
-          ['d4', 'd5', 'e4', 'e5'].includes(m.to)
-        );
+      if (typeof message === 'string' && message.startsWith('bestmove')) {
+        const moveStr = message.split(' ')[1];
         
-        if (captures.length > 0 && Math.random() > 0.3) {
-          selectedMove = captures[Math.floor(Math.random() * captures.length)];
-        } else if (centerMoves.length > 0 && Math.random() > 0.5) {
-          selectedMove = centerMoves[Math.floor(Math.random() * centerMoves.length)];
-        } else {
-          selectedMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-        }
-      } else if (elo >= 1600) {
-        // Intermediate/Advanced: Sometimes prefer captures
-        const captures = possibleMoves.filter(m => m.captured);
-        if (captures.length > 0 && Math.random() > 0.5) {
-          selectedMove = captures[Math.floor(Math.random() * captures.length)];
-        } else {
-          selectedMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-        }
-      } else {
-        // Beginner/Casual: Purely random
-        selectedMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-      }
-      
-      gameCopy.move(selectedMove);
-      setGame(gameCopy);
-      setThinking(false);
-      
-      // Execute premove if one exists
-      if (premove) {
-        setTimeout(() => {
-          const premoveSuccess = tryPremove(gameCopy, premove);
-          if (premoveSuccess) {
-            setPremove(null);
-          } else {
-            // Clear invalid premove
-            setPremove(null);
-            setSelectedSquare(null);
-            setOptionSquares({});
+        let updatedGame: Chess | null = null;
+        
+        try {
+          const gameCopy = new Chess(currentGame.fen());
+          
+          // Convert UCI format (e2e4) to chess.js format
+          const from = moveStr.substring(0, 2);
+          const to = moveStr.substring(2, 4);
+          const promotion = moveStr.length > 4 ? moveStr.substring(4, 5) : undefined;
+          
+          const move = gameCopy.move({
+            from,
+            to,
+            promotion,
+          });
+
+          if (move) {
+            setGame(gameCopy);
+            updatedGame = gameCopy;
           }
-        }, 100);
+        } catch (error) {
+          console.error('Error making computer move:', error);
+        }
+        
+        setThinking(false);
+        
+        // Execute premove if one exists
+        if (premove && updatedGame) {
+          setTimeout(() => {
+            const premoveSuccess = tryPremove(updatedGame!, premove);
+            if (premoveSuccess) {
+              setPremove(null);
+            } else {
+              setPremove(null);
+              setSelectedSquare(null);
+              setOptionSquares({});
+            }
+          }, 100);
+        }
+        
+        stockfish.removeEventListener('message', handleMessage);
       }
-    }, thinkTime);
-  }, [elo, premove]);
+    };
+
+    stockfish.addEventListener('message', handleMessage);
+  }, [elo, premove, stockfish]);
 
   const tryPremove = (currentGame: Chess, move: { from: string; to: string }) => {
     try {

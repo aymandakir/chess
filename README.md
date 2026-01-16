@@ -8,6 +8,11 @@ A clean, simple chess game where you can play online with friends by sharing a l
 - 🎨 Beautiful typography (Space Grotesk + Inter)
 - 🔗 Share game links instantly
 - 🎮 Full chess rules and validation
+- 🤖 Play vs AI powered by Stockfish engine
+- 📊 6 difficulty levels (800-2800 ELO) with realistic strength
+- ⚡ Premove support for faster gameplay
+- 👑 Pawn promotion with piece selection
+- 🌙 Beautiful dark mode
 - 📱 Mobile responsive
 - 🚀 Fast and lightweight
 
@@ -40,6 +45,8 @@ Open [http://localhost:3000](http://localhost:3000) to play.
 - Tailwind CSS
 - chess.js (game logic)
 - react-chessboard (board UI)
+- Stockfish.js (chess engine AI)
+- Framer Motion (animations)
 
 ## Design
 
