@@ -11,6 +11,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   
   const [game, setGame] = useState(new Chess());
   const [copied, setCopied] = useState(false);
+  const [optionSquares, setOptionSquares] = useState<Record<string, any>>({});
 
   const gameLink = typeof window !== 'undefined' 
     ? `${window.location.origin}/game/${gameId}` 
@@ -22,7 +23,40 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const getMoveOptions = (square: string) => {
+    const moves = game.moves({
+      square: square as any,
+      verbose: true,
+    });
+    
+    if (moves.length === 0) {
+      setOptionSquares({});
+      return false;
+    }
+
+    const newSquares: Record<string, any> = {};
+    moves.forEach((move) => {
+      newSquares[move.to] = {
+        background:
+          move.captured
+            ? "radial-gradient(circle, rgba(239, 68, 68, 0.5) 0%, rgba(239, 68, 68, 0.2) 85%, transparent 100%)"
+            : "radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(59, 130, 246, 0.15) 85%, transparent 100%)",
+        borderRadius: "50%",
+      };
+    });
+    
+    // Highlight the selected square
+    newSquares[square] = {
+      background: "rgba(59, 130, 246, 0.2)",
+    };
+    
+    setOptionSquares(newSquares);
+    return true;
+  };
+
   const onDrop = (sourceSquare: string, targetSquare: string) => {
+    setOptionSquares({});
+    
     try {
       const gameCopy = new Chess(game.fen());
       const move = gameCopy.move({
@@ -37,6 +71,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
       return true;
     } catch {
       return false;
+    }
+  };
+
+  const onSquareClick = (square: string) => {
+    getMoveOptions(square);
+  };
+
+  const onPieceClick = (piece: string, square: string | null) => {
+    if (square) {
+      getMoveOptions(square);
     }
   };
 
@@ -114,6 +158,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                     if (!targetSquare) return false;
                     return onDrop(sourceSquare, targetSquare);
                   },
+                  onSquareClick: ({ square }) => onSquareClick(square),
+                  onPieceClick: ({ piece, square }) => onPieceClick(piece.pieceType, square),
+                  onMouseOverSquare: ({ square, piece }) => {
+                    if (piece) {
+                      getMoveOptions(square);
+                    }
+                  },
+                  onMouseOutSquare: () => {
+                    setOptionSquares({});
+                  },
                   boardStyle: {
                     borderRadius: '8px',
                   },
@@ -123,6 +177,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   darkSquareStyle: { 
                     backgroundColor: '#a8a29e',
                   },
+                  squareStyles: optionSquares,
                 }}
               />
             </div>
