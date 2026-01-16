@@ -205,7 +205,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
             <button
               onClick={copyLink}
-              className="flex items-center gap-2 bg-primary-50 dark:bg-primary-950/50 hover:bg-primary-100 dark:hover:bg-primary-900/50 text-primary-700 dark:text-primary-400 font-medium px-4 py-2 rounded-lg transition-colors border border-primary-100 dark:border-primary-900"
+              className="flex items-center gap-2 bg-primary-500 dark:bg-primary-600 hover:bg-primary-600 dark:hover:bg-primary-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:scale-105 active:scale-95"
             >
               {copied ? (
                 <>
@@ -292,12 +292,13 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             </div>
 
             {/* How to Play */}
-            <div className="bg-primary-50 dark:bg-primary-950/50 rounded-xl p-6 border border-primary-100 dark:border-primary-900">
-              <h3 className="font-semibold text-primary-900 dark:text-primary-300 mb-3">How to Play</h3>
-              <ul className="text-sm text-primary-800 dark:text-primary-200 space-y-2">
+            <div className="bg-white dark:bg-neutral-800 rounded-xl p-6 shadow-sm border border-neutral-200 dark:border-neutral-700">
+              <h3 className="font-semibold text-neutral-900 dark:text-white mb-3">How to Play</h3>
+              <ul className="text-sm text-neutral-600 dark:text-neutral-400 space-y-2">
                 <li>• Hover pieces to see moves</li>
-                <li>• Drag pieces to move</li>
-                <li>• Share the game code</li>
+                <li>• Click to select, click to move</li>
+                <li>• Or drag pieces directly</li>
+                <li>• Share the game code above</li>
               </ul>
             </div>
           </div>
