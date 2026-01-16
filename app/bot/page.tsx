@@ -17,6 +17,7 @@ function BotGame() {
   const [thinking, setThinking] = useState(false);
   const [optionSquares, setOptionSquares] = useState<Record<string, any>>({});
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [premove, setPremove] = useState<{ from: string; to: string } | null>(null);
 
   const getLevelName = (elo: number) => {
     if (elo <= 800) return "Beginner";
@@ -71,8 +72,49 @@ function BotGame() {
       gameCopy.move(selectedMove);
       setGame(gameCopy);
       setThinking(false);
+      
+      // Execute premove if one exists
+      if (premove) {
+        setTimeout(() => {
+          const premoveSuccess = tryPremove(gameCopy, premove);
+          if (premoveSuccess) {
+            setPremove(null);
+          } else {
+            // Clear invalid premove
+            setPremove(null);
+            setSelectedSquare(null);
+            setOptionSquares({});
+          }
+        }, 100);
+      }
     }, thinkTime);
-  }, [elo]);
+  }, [elo, premove]);
+
+  const tryPremove = (currentGame: Chess, move: { from: string; to: string }) => {
+    try {
+      const gameCopy = new Chess(currentGame.fen());
+      const result = gameCopy.move({
+        from: move.from,
+        to: move.to,
+        promotion: 'q',
+      });
+
+      if (result === null) return false;
+
+      setGame(gameCopy);
+      
+      // Computer responds to premove
+      if (!gameCopy.isGameOver() && gameCopy.turn() === 'b') {
+        setTimeout(() => {
+          makeComputerMove(gameCopy);
+        }, 200);
+      }
+      
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   const getMoveOptions = (square: string) => {
     const moves = game.moves({
@@ -85,11 +127,16 @@ function BotGame() {
       return false;
     }
 
+    const isPremove = thinking && game.turn() !== 'w';
+    
     const newSquares: Record<string, any> = {};
     moves.forEach((move) => {
       newSquares[move.to] = {
-        background:
-          move.captured
+        background: isPremove
+          ? move.captured
+            ? "radial-gradient(circle, rgba(251, 146, 60, 0.6) 15%, transparent 20%)" // Orange for premove captures
+            : "radial-gradient(circle, rgba(251, 146, 60, 0.4) 20%, transparent 25%)" // Orange for premoves
+          : move.captured
             ? "radial-gradient(circle, rgba(239, 68, 68, 0.7) 15%, transparent 20%)"
             : "radial-gradient(circle, rgba(59, 130, 246, 0.5) 20%, transparent 25%)",
         borderRadius: "50%",
@@ -98,7 +145,7 @@ function BotGame() {
     
     // Subtle highlight for the selected square
     newSquares[square] = {
-      background: "rgba(59, 130, 246, 0.12)",
+      background: isPremove ? "rgba(251, 146, 60, 0.15)" : "rgba(59, 130, 246, 0.12)",
     };
     
     setOptionSquares(newSquares);
@@ -106,15 +153,17 @@ function BotGame() {
   };
 
   const onDrop = (sourceSquare: string, targetSquare: string) => {
+    // If computer is thinking, this is a premove via drag
+    if (thinking || game.turn() !== 'w') {
+      setPremove({ from: sourceSquare, to: targetSquare });
+      setOptionSquares({});
+      setSelectedSquare(null);
+      return true; // Accept the drag but queue as premove
+    }
+    
     // Clear highlights and selection
     setOptionSquares({});
     setSelectedSquare(null);
-    
-    // Prevent moves while computer is thinking
-    if (thinking) return false;
-    
-    // Only allow moving white pieces (player is white)
-    if (game.turn() !== 'w') return false;
     
     try {
       const gameCopy = new Chess(game.fen());
@@ -143,8 +192,27 @@ function BotGame() {
   };
 
   const onSquareClick = (square: string) => {
-    // Don't allow clicks when computer is thinking or it's not player's turn
-    if (thinking || game.turn() !== 'w') return;
+    // Allow premoves during computer's turn
+    if (game.turn() !== 'w' && thinking) {
+      // If no piece is selected, select a white piece for premove
+      if (!selectedSquare) {
+        const piece = game.get(square as any);
+        if (piece && piece.color === 'w') {
+          setSelectedSquare(square);
+          getMoveOptions(square);
+        }
+        return;
+      }
+      
+      // Set premove
+      setPremove({ from: selectedSquare, to: square });
+      setSelectedSquare(null);
+      setOptionSquares({});
+      return;
+    }
+    
+    // Normal turn logic
+    if (game.turn() !== 'w') return;
     
     // If no piece is selected, try to select this square's piece
     if (!selectedSquare) {
@@ -265,8 +333,9 @@ function BotGame() {
                   onSquareClick: ({ square }) => onSquareClick(square),
                   onPieceClick: ({ piece, square }) => onPieceClick(piece.pieceType, square),
                   onMouseOverSquare: ({ square, piece }) => {
-                    // Only show hover preview if no piece is currently selected
-                    if (!selectedSquare && !thinking && game.turn() === 'w' && piece && piece.pieceType[0] === 'w') {
+                    // Show hover preview if no piece is selected
+                    // Allow during computer turn for premove visualization
+                    if (!selectedSquare && piece && piece.pieceType[0] === 'w') {
                       getMoveOptions(square);
                     }
                   },
@@ -336,6 +405,12 @@ function BotGame() {
                 {thinking && (
                   <div className="pt-2 text-xs text-primary-600 dark:text-primary-400 font-medium animate-pulse">
                     🤔 Computer is thinking...
+                  </div>
+                )}
+                
+                {premove && (
+                  <div className="pt-2 text-xs text-orange-600 dark:text-orange-400 font-medium">
+                    ⚡ Premove queued
                   </div>
                 )}
               </div>
