@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/navigation";
-import { Users, Sparkles, Cpu, X, GraduationCap, Puzzle, BookOpen } from "lucide-react";
+import { Users, Sparkles, Cpu, X, GraduationCap, Puzzle, BookOpen, BarChart3 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTheme } from "@/lib/useTheme";
 
@@ -40,8 +40,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-950 relative">
-      {/* Theme Toggle - Top Right */}
-      <div className="absolute top-6 right-6">
+      {/* Top Right Controls */}
+      <div className="absolute top-6 right-6 flex items-center gap-3">
+        <a
+          href="/stats"
+          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-primary-400 dark:hover:border-primary-600 transition-colors text-neutral-900 dark:text-white font-medium"
+        >
+          <BarChart3 className="w-5 h-5" />
+          <span className="hidden sm:inline">Stats</span>
+        </a>
         <ThemeToggle />
       </div>
 
