@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/navigation";
-import { Users, Sparkles, Cpu, X, GraduationCap, Puzzle, BookOpen, BarChart3, Trophy } from "lucide-react";
+import { Users, Sparkles, Cpu, X, GraduationCap, Puzzle, BookOpen, BarChart3, Trophy, Zap } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTheme } from "@/lib/useTheme";
 
@@ -123,15 +123,27 @@ export default function Home() {
             </div>
           </button>
 
-          <button
-            onClick={() => setShowBotMenu(!showBotMenu)}
-            className="w-full bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] border-2 border-neutral-200 dark:border-neutral-700"
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Cpu className="w-5 h-5" />
-              <span>Play vs Computer</span>
-            </div>
-          </button>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setShowBotMenu(!showBotMenu)}
+              className="bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] border-2 border-neutral-200 dark:border-neutral-700"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Cpu className="w-5 h-5" />
+                <span>Play vs Bot</span>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => router.push('/training')}
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-cyan-500/30"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Zap className="w-5 h-5" />
+                <span>Training</span>
+              </div>
+            </button>
+          </div>
 
           <button
             onClick={() => setShowJoinModal(true)}
