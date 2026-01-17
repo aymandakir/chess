@@ -41,13 +41,18 @@ export default function Home() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-950 relative">
       {/* Top Right Controls */}
-      <div className="absolute top-6 right-6 flex items-center gap-3">
+      <div className="absolute top-6 right-6 flex items-center gap-2">
+        <a
+          href="/profile"
+          className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-amber-400 dark:hover:border-amber-600 transition-colors text-neutral-900 dark:text-white"
+        >
+          <Trophy className="w-5 h-5" />
+        </a>
         <a
           href="/stats"
-          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-primary-400 dark:hover:border-primary-600 transition-colors text-neutral-900 dark:text-white font-medium"
+          className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-primary-400 dark:hover:border-primary-600 transition-colors text-neutral-900 dark:text-white"
         >
           <BarChart3 className="w-5 h-5" />
-          <span className="hidden sm:inline">Stats</span>
         </a>
         <ThemeToggle />
       </div>

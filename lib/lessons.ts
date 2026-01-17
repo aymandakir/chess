@@ -1,13 +1,31 @@
+export interface InteractivePosition {
+  fen: string;
+  question: string;
+  correctMove: string;
+  explanation: string;
+}
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+}
+
 export interface Lesson {
   id: string;
   title: string;
   description: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'master';
-  category: 'basics' | 'tactics' | 'strategy' | 'opening' | 'endgame';
+  category: 'basics' | 'tactics' | 'strategy' | 'opening' | 'endgame' | 'patterns' | 'famous-games' | 'defense' | 'positional' | 'advanced-tactics' | 'pawn-structures';
   eloRequirement: number;
   locked: boolean;
   content?: string;
   objectives?: string[];
+  videoUrl?: string;
+  interactivePositions?: InteractivePosition[];
+  quiz?: QuizQuestion[];
+  estimatedTime?: number; // minutes
 }
 
 export interface LessonCategory {
