@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/navigation";
-import { Users, Sparkles, Cpu, X, GraduationCap } from "lucide-react";
+import { Users, Sparkles, Cpu, X, GraduationCap, Puzzle } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTheme } from "@/lib/useTheme";
 
@@ -68,6 +68,16 @@ export default function Home() {
             <div className="flex items-center justify-center gap-2">
               <GraduationCap className="w-5 h-5" />
               <span>Learn Chess</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => router.push('/puzzles')}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-purple-500/30"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Puzzle className="w-5 h-5" />
+              <span>Solve Puzzles</span>
             </div>
           </button>
 
